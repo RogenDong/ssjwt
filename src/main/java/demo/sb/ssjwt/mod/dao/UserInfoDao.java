@@ -2,10 +2,7 @@ package demo.sb.ssjwt.mod.dao;
 
 import demo.sb.ssjwt.common.enums.GenderEnum;
 import demo.sb.ssjwt.common.mod.BaseDao;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.*;
 import java.time.LocalDate;
