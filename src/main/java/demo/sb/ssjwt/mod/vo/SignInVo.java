@@ -8,4 +8,8 @@ import lombok.NoArgsConstructor;
  */
 @NoArgsConstructor
 public class SignInVo extends SignVo {
+    public SignInVo(String codename, String password) {
+        this.codename = codename;
+        this.setPassword(password);
+    }
 }
