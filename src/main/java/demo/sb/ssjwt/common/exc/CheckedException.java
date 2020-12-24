@@ -7,20 +7,23 @@ import lombok.Getter;
 public class CheckedException extends RuntimeException {
     @Getter
     protected int code = CommonConst.DEF_FAILURE_CODE;
-    protected String message = CommonConst.DEF_FAILURE_MSG;
-
-    public CheckedException() {
-        super(CommonConst.DEF_FAILURE_MSG);
-    }
+    protected final String message;
 
     public CheckedException(String message) {
-        super(message);
+        super(StringUtil.isNullOrBlank(message) ? CommonConst.DEF_FAILURE_MSG : message);
+        this.message = message;
+    }
+
+    public CheckedException() {
+        this(CommonConst.DEF_FAILURE_MSG);
     }
 
     public CheckedException(Throwable cause) {
         String m;
         if (cause != null && !StringUtil.isNullOrBlank(m = cause.getMessage())) {
             message = m;
+        } else {
+            message = CommonConst.DEF_FAILURE_MSG;
         }
     }
 
@@ -29,15 +32,11 @@ public class CheckedException extends RuntimeException {
             code = e.code;
             String m = e.getMessage();
             if (StringUtil.isNullOrBlank(m)) {
-                this.message = m;
+                message = m;
+                return;
             }
         }
-    }
-
-    @Override
-    public String getMessage() {
-        String s = super.getMessage();
-        return StringUtil.isNullOrBlank(s) ? this.message : s;
+        message = CommonConst.DEF_FAILURE_MSG;
     }
 }
 

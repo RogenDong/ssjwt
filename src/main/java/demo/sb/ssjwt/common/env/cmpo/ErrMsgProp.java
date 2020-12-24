@@ -2,6 +2,7 @@ package demo.sb.ssjwt.common.env.cmpo;
 
 import demo.sb.ssjwt.common.enums.ErrMsg;
 import demo.sb.ssjwt.common.util.CommonConst;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ public class ErrMsgProp {
 
     private static ErrMsgProp prop = null;
 
+    @Autowired
     public ErrMsgProp(Environment environment) {
         this.env = environment;
         ErrMsgProp.prop = this;

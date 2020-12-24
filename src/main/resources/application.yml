@@ -25,15 +25,14 @@ spring:
     sign-up-api: /sign/up
     logout-api: /logout
     ignore:
-      - /login
       - /ignore
-      - /test
     must:
       - /must
+
 jwt:
   issuer: ssjwt
   prefix: ssjwt-
   # 3天
   expiration: 259200000
   secret: !!str 334568540
-  head-key: Authorization
+  header-key: Authorization

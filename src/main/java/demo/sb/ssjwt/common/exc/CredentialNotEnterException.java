@@ -5,7 +5,7 @@ import demo.sb.ssjwt.common.env.cmpo.ErrMsgProp;
 import lombok.Getter;
 
 /**
- * 登录号和密码未填 TODO 前端需要识别
+ * 登录号或密码未填
  */
 @Getter
 public class CredentialNotEnterException extends CheckedException {

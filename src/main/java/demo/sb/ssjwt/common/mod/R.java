@@ -4,12 +4,14 @@ import demo.sb.ssjwt.common.exc.CheckedException;
 import demo.sb.ssjwt.common.util.CommonConst;
 import demo.sb.ssjwt.common.util.StringUtil;
 import lombok.AllArgsConstructor;
+import lombok.ToString;
 
 /**
  * 请求结果（result）
  *
  * @param <T> {@link #data}的 Java 类型
  */
+@ToString
 @AllArgsConstructor
 public class R<T> {
     /**
@@ -39,9 +41,11 @@ public class R<T> {
     public <CE extends CheckedException> R(CE ce, T data) {
         code = CommonConst.DEF_FAILURE_CODE;
         this.data = data;
-        String m;
-        if (ce != null && StringUtil.isNullOrBlank(m = ce.getMessage())) {
-            message = m;
+        if (ce != null) {
+            if (!StringUtil.isNullOrBlank(ce.getMessage())) {
+                message = ce.getMessage();
+            }
+            code = ce.getCode();
         } else {
             message = CommonConst.DEF_FAILURE_MSG;
         }
@@ -53,11 +57,19 @@ public class R<T> {
         message = msg;
     }
 
+    public static <T> R<T> ok(T data) {
+        return ok(data, null);
+    }
+
     public static <T> R<T> ok(T data, String msg) {
         if (StringUtil.isNullOrBlank(msg)) {
             msg = CommonConst.DEF_SUCCESS_MSG;
         }
         return new R<>(data, CommonConst.DEF_SUCCESS_CODE, msg);
+    }
+
+    public static <T> R<T> fail(T data) {
+        return fail(data, null);
     }
 
     public static <T> R<T> fail(T data, String msg) {

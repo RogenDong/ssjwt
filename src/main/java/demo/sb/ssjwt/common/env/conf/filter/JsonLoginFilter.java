@@ -3,6 +3,7 @@ package demo.sb.ssjwt.common.env.conf.filter;
 import demo.sb.ssjwt.common.enums.ErrMsg;
 import demo.sb.ssjwt.common.env.cmpo.ErrMsgProp;
 import demo.sb.ssjwt.common.env.cmpo.JWTokenUtil;
+import demo.sb.ssjwt.common.exc.CheckedException;
 import demo.sb.ssjwt.common.mod.R;
 import demo.sb.ssjwt.common.util.CommonConst;
 import demo.sb.ssjwt.mod.vo.AccountDetailVo;
@@ -43,13 +44,13 @@ public class JsonLoginFilter extends UsernamePasswordAuthenticationFilter {
     ) throws AuthenticationException {
         String ct;
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(null, null);
-        if (request == null || (ct = request.getContentType()) == null || ct.contains(CommonConst.APPLICATION_JSON)) {
+        if (request == null || (ct = request.getContentType()) == null || !ct.contains(CommonConst.APPLICATION_JSON)) {
             return getAuthenticationManager().authenticate(auth);
         }
         auth = ReqRspUtil.build(request, response, this.getClass())
                 // 转化请求参数为 spring-security 需要的 token 实体
                 .getByReq(SignInVo.class, auth, vo -> {
-                    log.debug("login account: {}", vo.getCodename());
+                    log.info("login account: {}", vo.getCodename());
                     return new UsernamePasswordAuthenticationToken(vo.getCodename(), vo.getPassword());
                 });
         return getAuthenticationManager().authenticate(auth);
@@ -63,16 +64,26 @@ public class JsonLoginFilter extends UsernamePasswordAuthenticationFilter {
             super.successfulAuthentication(request, response, chain, authResult);
             return;
         }
-        AccountDetailVo info = (AccountDetailVo) authResult.getPrincipal();
-        String token = JWTokenUtil.that.getPrefix() + JWTokenUtil.newToken(info.getUsername(), info.getPassword());
-        log.debug("get token account: {}", info.getUsername());
-        log.debug("token: {}", token);
-        // 将成功消息写入响应结果 TODO 保留登录 api 的返回值
-        ReqRspUtil.build(null, response, this.getClass())
-                .writeRspResult(
-                        R.ok(token, CommonConst.DEF_SUCCESS_MSG),
-                        rsp -> rsp.setHeader(JWTokenUtil.that.getHeaderKey(), token)
-                );
+        ReqRspUtil reqRspUtil = ReqRspUtil.build(null, response, this.getClass());
+        String token;
+        try {
+            // 认证信息
+            AccountDetailVo info = (AccountDetailVo) authResult.getPrincipal();
+            // 构建
+            token = JWTokenUtil.that.getPrefix() + JWTokenUtil.newToken(info.getUsername(), info.getRules());
+            log.info("get token account: {}", info.getUsername());
+            log.info("token: {}", token);
+        } catch (Exception e) {
+            log.error("token 颁发失败！");
+            log.error(e.getMessage(), e);
+            reqRspUtil.writeRspResult(new R<>(new CheckedException(), null), null);
+            return;
+        }
+        // 将成功消息写入响应结果
+        reqRspUtil.writeRspResult(
+                R.ok(token, CommonConst.DEF_SUCCESS_MSG),
+                rsp -> rsp.setHeader(JWTokenUtil.that.getHeaderKey(), token)
+        );
     }
 
     @Override

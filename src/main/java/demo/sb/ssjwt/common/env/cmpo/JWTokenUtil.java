@@ -3,7 +3,9 @@ package demo.sb.ssjwt.common.env.cmpo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Getter
+@Setter
 @Component
 @ConfigurationProperties(prefix = "jwt")
 public class JWTokenUtil {
@@ -43,6 +46,7 @@ public class JWTokenUtil {
     /**
      * 当前 spring-bean 的引用
      */
+    @Setter(AccessLevel.PRIVATE)
     public static JWTokenUtil that = null;
 
     /**
@@ -90,7 +94,7 @@ public class JWTokenUtil {
     /**
      * 签名算法
      */
-    private static final SignatureAlgorithm algorithm = SignatureAlgorithm.ES256;
+    private static final SignatureAlgorithm algorithm = SignatureAlgorithm.HS256;
 
     /**
      * 颁发新的 token

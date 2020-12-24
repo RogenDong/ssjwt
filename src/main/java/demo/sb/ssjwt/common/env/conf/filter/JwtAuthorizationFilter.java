@@ -41,12 +41,19 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             HttpServletRequest request, HttpServletResponse response, FilterChain chain
     ) throws IOException, ServletException {
         ReqRspUtil reqRspUtil = ReqRspUtil.build(request, response, this.getClass());
-        UsernamePasswordAuthenticationToken auth;
+        UsernamePasswordAuthenticationToken auth = null;
         boolean rspWrote = false;
         String jwt = request.getHeader(JWTokenUtil.that.getHeaderKey());
         try {
             // 解析 token，格式不对 or 过期时 JJWT 会抛出异常
-            auth = getAuthentication(jwt);
+            if (!StringUtil.isNullOrBlank(jwt) && jwt.startsWith(JWTokenUtil.that.getPrefix())) {
+                // 若 token 过期，JJWT 会自动抛出异常
+                Claims claims = JWTokenUtil.toClaims(jwt.replace(JWTokenUtil.that.getPrefix(), ""));
+                List<SimpleGrantedAuthority> rules = Arrays.stream(claims.getAudience().split(","))
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+                auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, rules);
+            }
         } catch (Exception e) {
             if (e instanceof ExpiredJwtException) {
                 // token 过期，需要重新登录 TODO 自动续签
@@ -56,7 +63,6 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
                 log.error("JWT-token 解析失败！token 正文：{}", jwt);
                 log.error(e.getMessage(), e);
             }
-            auth = null;
         }
         if (auth == null) {
             // 身份获取失败
@@ -67,26 +73,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         } else {
             // 获取成功，将身份提供给 spring-security 上下文
             SecurityContextHolder.getContext().setAuthentication(auth);
-            log.debug("request account: {}", auth.getCredentials());
+            log.info("request account: {}", auth.getCredentials());
             super.doFilterInternal(request, response, chain);
         }
-    }
-
-    /**
-     * 解析 token 获取认证信息
-     *
-     * @param token jwt
-     * @return spring-security 认证信息
-     */
-    private static UsernamePasswordAuthenticationToken getAuthentication(String token) throws Exception {
-        if (StringUtil.isNullOrBlank(token) || token.startsWith(JWTokenUtil.that.getPrefix())) {
-            return null;
-        }
-        // 若 token 过期，JJWT 会自动抛出异常
-        Claims claims = JWTokenUtil.toClaims(token.replace(JWTokenUtil.that.getPrefix(), ""));
-        List<SimpleGrantedAuthority> rules = Arrays.stream(claims.getAudience().split(","))
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-        return new UsernamePasswordAuthenticationToken(claims.getSubject(), null, rules);
     }
 }

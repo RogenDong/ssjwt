@@ -1,5 +1,6 @@
 package demo.sb.ssjwt.mod.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import demo.sb.ssjwt.common.enums.RuleEnum;
 import demo.sb.ssjwt.mod.dao.RuleMappingDao;
 import lombok.AllArgsConstructor;
@@ -16,8 +17,16 @@ import java.util.stream.Collectors;
 public class AccountDetailVo implements UserDetails {
 
     private final String codename;
+    @JsonIgnore
     private final String password;
     private final List<RuleMappingDao> ruleMappings;
+
+    public String getRules() {
+        return ruleMappings.stream()
+                .map(RuleMappingDao::getRule)
+                .map(Enum::name)
+                .collect(Collectors.joining(","));
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -27,7 +36,6 @@ public class AccountDetailVo implements UserDetails {
                 .map(RuleEnum::name)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
-
     }
 
     @Override

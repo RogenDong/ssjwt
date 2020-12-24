@@ -2,9 +2,9 @@ package demo.sb.ssjwt.common.env.conf;
 
 import demo.sb.ssjwt.common.env.conf.filter.JsonLoginFilter;
 import demo.sb.ssjwt.common.env.conf.filter.JwtAuthorizationFilter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -19,7 +19,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
  *
  * @see WebSecurityConfigurerAdapter
  */
-@Configuration
+@Setter
 @EnableWebSecurity
 //@EnableGlobalMethodSecurity(prePostEnabled = true)
 @ConfigurationProperties(prefix = "spring.security")
@@ -63,28 +63,25 @@ public class SecurityConf extends WebSecurityConfigurerAdapter {
             return;
         }
         AuthenticationManager manager = authenticationManager();
-        http.cors()
-                .and()
-                // 配置需要登录/不需登录的请求
-                .authorizeRequests()
-                .antMatchers(ignore).permitAll()
-                .antMatchers(must).authenticated()
-                .and()
-                // 添加普通请求的过滤器
-                .addFilter(new JwtAuthorizationFilter(manager))
+        // 配置需要登录/不需登录的请求 fixme 配置的过滤没有起效
+        http.authorizeRequests()
+//                .antMatchers(must).hasAnyRole(allRule)
+//                .antMatchers(ignore).permitAll()
+//                .antMatchers("/**/*.*").permitAll()
+//                .antMatchers(signInApi, signUpApi, logoutApi).permitAll();
+                .anyRequest().authenticated();
+        http.cors().and().httpBasic();
+        // 添加普通请求的过滤器
+        http.addFilter(new JwtAuthorizationFilter(manager))
                 // 添加登录请求的过滤器
                 .addFilter(new JsonLoginFilter(signInApi, manager))
                 // 不需要session
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                // 配置登录请求和响应
-                .formLogin()
-                .and()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        // 配置登录请求和响应
+        http.formLogin().loginProcessingUrl(signInApi).and()
                 // 配置注销处理
-                .logout().logoutRequestMatcher(new AntPathRequestMatcher(logoutApi, "DELETE"))
-                .and()
-                // 配置跨域
-                .csrf().disable();
+                .logout().logoutRequestMatcher(new AntPathRequestMatcher(logoutApi, "DELETE"));
+        // 配置跨域
+        http.csrf().disable();
     }
 }
